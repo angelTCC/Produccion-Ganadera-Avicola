@@ -20,12 +20,14 @@ def load_especies(sheet_name, name_cuadro):
     regiones = ["Región", "Tumbes", "Piura", 
                 "Lambayeque", "La Libertad", 
                 "Cajamarca", "Amazonas", "Ancash", 
-                "Lima","Ica", "Huánuco",
+                "Lima", "LimaP","Ica", "Huánuco",
                 "Pasco", "Junín", "Huancavelica",
                 "Arequipa", "Moquegua", "Tacna",
                 "Ayacucho", "Apurímac", "Cusco",
                 "Puno", "San Martín", "Loreto",
-                "Ucayali","Madre de Dios"]
+                "Ucayali","Madre de Dios", "M.de Dios"]
+    # en el 2023 se coloco LimaP para poblacion table
+    # en el 2018 se coloco M.de Dios para la tabla de carne
 
     '''
     Load data
@@ -37,9 +39,17 @@ def load_especies(sheet_name, name_cuadro):
     for path, year  in zip(excel_path, years):
         try :
             df = pd.read_excel(path, sheet_name)
+
+            col0 = df.iloc[:, 0].astype(str)
             
             # select data
-            starts = df.index[df.apply(lambda r: r.astype(str).str.contains("|".join(map(str, regiones))).any(), axis=1)]
+            #starts = df.index[df.apply(lambda r: r.astype(str).str.contains("|".join(map(str, regiones))).any(), axis=1)]
+            #if year =="2018":
+            #    print(col0)
+            starts = df[
+                            col0.str.strip().isin(regiones) &     # contenido real es una región
+                            ~col0.str.startswith(" ")             # NO está indentada
+                        ].index
             df = df.iloc[starts,:].reset_index(drop=True) # Selecting the frame
 
             # columns treatment
@@ -51,7 +61,7 @@ def load_especies(sheet_name, name_cuadro):
             df = df.loc[:, ~df.columns.str.contains("nan|^unnamed", case=False, na=True)]
             df["year"] = year
 
-
+            df = df[["región","ave","ovino","porcino","vacuno","caprino","alpaca","llama","year"]]
             data[year] = df
 
         except ValueError as e:
@@ -111,3 +121,7 @@ if __name__=="__main__":
 
     #python3 EDA.py --sheet "C-4" --name "poblacion"
     #sheet 6 don't follow the paterns
+    # C 7 produccion, 
+    # C 8 carnes
+    # C 9 rendimiento
+    # 
